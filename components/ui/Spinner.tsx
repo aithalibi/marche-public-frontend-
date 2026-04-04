@@ -1,0 +1,18 @@
+import clsx from 'clsx'
+
+interface SpinnerProps {
+  size?: 'sm' | 'md' | 'lg'
+  className?: string
+}
+
+export default function Spinner({ size = 'md', className }: SpinnerProps) {
+  return (
+    <div
+      className={clsx(
+        'border-2 border-arch-lavender border-t-arch-violet rounded-full animate-spin',
+        { 'h-4 w-4': size === 'sm', 'h-8 w-8': size === 'md', 'h-12 w-12': size === 'lg' },
+        className
+      )}
+    />
+  )
+}
