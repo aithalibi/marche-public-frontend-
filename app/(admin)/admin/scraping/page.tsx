@@ -39,6 +39,23 @@ export default function ScrapingPage() {
         </p>
       </div>
 
+      <div className="rounded-xl border border-gray-200 bg-[#1e1e1e] p-4 text-sm text-gray-200">
+        <h2 className="mb-4 text-lg font-semibold text-white">Utilisation dans le frontend:</h2>
+        <pre className="overflow-x-auto whitespace-pre-wrap font-mono text-sm leading-7 text-gray-200">
+{`import { apiClient } from '@/lib/api';
+
+// Login
+const res = await apiClient.login('email@example.com', 'your-password');
+localStorage.setItem('token', res.accessToken);
+
+// Notifications
+const notifs = await apiClient.getNotifications();
+
+// Offres
+const offres = await apiClient.searchOffres('informatique');`}
+        </pre>
+      </div>
+
       {isLoading ? (
         <div className="flex justify-center py-12"><Spinner /></div>
       ) : (
