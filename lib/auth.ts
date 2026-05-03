@@ -1,7 +1,7 @@
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { login } from '@/lib/api/auth'
-import type { User } from '@/types'
+import type { BackendAuthResponse, User } from '@/types'
 
 // ── Comptes de démo (pas de backend requis) ───────────────────────────────────
 const DEMO_USERS: Record<string, User & { token: string; password: string }> = {
@@ -47,17 +47,18 @@ export const authOptions: NextAuthOptions = {
         // Vérifier les comptes de démo en premier
         const demo = DEMO_USERS[credentials.email]
         if (demo && demo.password === credentials.password) {
-          const { password: _, ...user } = demo
+          const user = { ...demo }
+          delete (user as { password?: string }).password
           return user as User & { token: string }
         }
 
         // Sinon appeler le vrai backend
         try {
-          const { token, user } = await login({
+          const auth = await login({
             email: credentials.email,
             password: credentials.password,
           })
-          return { ...user, token } as User & { token: string }
+          return toSessionUser(auth)
         } catch {
           return null
         }
@@ -92,4 +93,16 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt',
     maxAge: 24 * 60 * 60,
   },
+}
+
+function toSessionUser(auth: BackendAuthResponse): User & { token: string } {
+  return {
+    id: auth.userId,
+    nom: auth.nom,
+    prenom: auth.prenom,
+    email: auth.email,
+    role: auth.role,
+    questionnaireFait: false,
+    token: auth.token,
+  }
 }

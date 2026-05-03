@@ -1,9 +1,14 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
+import { useOffreFilters } from '@/hooks/useOffreFilters'
 import { useOffres } from '@/hooks/useOffres'
 import { updateSuivi } from '@/lib/api/offres'
-import type { OffresFilters, SuiviStatus } from '@/types'
+import type { OffresFilters, StatutOffre, SuiviStatus } from '@/types'
+
+function isStatutOffre(value: string): value is StatutOffre {
+  return value === 'OUVERT' || value === 'CLOS' || value === 'ATTRIBUE' || value === 'ANNULE'
+}
 
 function formatDate(dateStr: string) {
   if (!dateStr) return '—'
@@ -18,44 +23,55 @@ function daysUntil(dateStr: string) {
 
 function statutBadgeClass(statut: string) {
   switch (statut) {
-    case 'OUVERT': return 'badge-statut badge-nouveau'
-    case 'CLOS': return 'badge-statut badge-cloture'
-    case 'ANNULE': return 'badge-statut badge-cloture'
-    case 'ATTRIBUE': return 'badge-statut badge-en-cours'
-    default: return 'badge-statut badge-nouveau'
+    case 'OUVERT':
+      return 'badge-statut badge-nouveau'
+    case 'CLOS':
+      return 'badge-statut badge-cloture'
+    case 'ANNULE':
+      return 'badge-statut badge-cloture'
+    case 'ATTRIBUE':
+      return 'badge-statut badge-en-cours'
+    default:
+      return 'badge-statut badge-nouveau'
   }
 }
 
 function statutLabel(statut: string) {
   switch (statut) {
-    case 'OUVERT': return 'Ouvert'
-    case 'CLOS': return 'Clôturé'
-    case 'ANNULE': return 'Annulé'
-    case 'ATTRIBUE': return 'Attribué'
-    default: return statut
+    case 'OUVERT':
+      return 'Ouvert'
+    case 'CLOS':
+      return 'Clôturé'
+    case 'ANNULE':
+      return 'Annulé'
+    case 'ATTRIBUE':
+      return 'Attribué'
+    default:
+      return statut
   }
 }
 
 function typeBadge(type: string) {
-  switch (type) {
-    case 'SERVICES':
-    case 'INFORMATIQUE': return { cls: 'badge badge-services', icon: 'fa-chalkboard-user', label: 'Services' }
-    case 'FOURNITURES': return { cls: 'badge badge-fournitures', icon: 'fa-boxes-stacked', label: 'Fournitures' }
-    case 'TRAVAUX': return { cls: 'badge badge-btp', icon: 'fa-hard-hat', label: 'BTP' }
-    default: return { cls: 'badge badge-it', icon: 'fa-laptop', label: 'IT' }
-  }
-}
+  const normalized = type.toUpperCase()
 
-const CATEGORIES = [
-  { value: 'SERVICES', label: 'Services', icon: 'fa-chalkboard-user', cls: 'badge badge-services' },
-  { value: 'TRAVAUX', label: 'BTP / Travaux', icon: 'fa-hard-hat', cls: 'badge badge-btp' },
-  { value: 'FOURNITURES', label: 'Fournitures', icon: 'fa-boxes-stacked', cls: 'badge badge-fournitures' },
-]
+  if (normalized.includes('FOURNITURE')) {
+    return { cls: 'badge badge-fournitures', icon: 'fa-boxes-stacked', label: 'Fournitures' }
+  }
+  if (normalized.includes('TRAVAUX') || normalized.includes('BTP')) {
+    return { cls: 'badge badge-btp', icon: 'fa-hard-hat', label: 'Travaux' }
+  }
+  if (normalized.includes('SERVICE')) {
+    return { cls: 'badge badge-services', icon: 'fa-chalkboard-user', label: 'Services' }
+  }
+
+  return { cls: 'badge badge-it', icon: 'fa-tag', label: type || 'Catégorie' }
+}
 
 export default function MarchesPage() {
   const [filters, setFilters] = useState<OffresFilters>({ size: 20, page: 0 })
   const [search, setSearch] = useState('')
   const { data, isLoading, error, mutate } = useOffres(filters)
+  const { filterOptions } = useOffreFilters()
 
   const total = data?.totalElements ?? 0
   const content = data?.content ?? []
@@ -90,29 +106,6 @@ export default function MarchesPage() {
         </div>
       </div>
 
-      {/* Category quick filters */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-        <button
-          className="u-btn-icon"
-          style={!filters.typeMarche ? { borderColor: 'var(--primary)', color: 'var(--primary)', background: '#EFF6FF' } : {}}
-          onClick={() => setFilters((f) => ({ ...f, typeMarche: undefined, page: 0 }))}
-        >
-          <i className="fa-solid fa-layer-group" aria-hidden /> Toutes catégories
-          {!filters.typeMarche && <span style={{ background: 'var(--primary)', color: '#fff', fontSize: 9, fontWeight: 800, padding: '1px 5px', borderRadius: 10, marginLeft: 4 }}>{total}</span>}
-        </button>
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat.value}
-            className="u-btn-icon"
-            style={filters.typeMarche === cat.value ? { borderColor: 'var(--primary)', color: 'var(--primary)', background: '#EFF6FF' } : {}}
-            onClick={() => setFilters((f) => ({ ...f, typeMarche: cat.value as any, page: 0 }))}
-          >
-            <i className={`fa-solid ${cat.icon}`} aria-hidden /> {cat.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Search panel */}
       <div className="u-search-panel">
         <div className="u-search-header">
           <i className="fa-solid fa-magnifying-glass" aria-hidden /> Recherche avancée
@@ -136,76 +129,84 @@ export default function MarchesPage() {
               <i className="fa-solid fa-rotate-left" aria-hidden /> Réinitialiser
             </button>
           </div>
+
           <div className="u-filtres-grid">
             <div className="u-filtre-group">
               <label>Catégorie</label>
               <select
-                value={filters.typeMarche ?? ''}
-                onChange={(e) => setFilters((f) => ({ ...f, typeMarche: (e.target.value as any) || undefined, page: 0 }))}
+                value={filters.secteur ?? filters.typeMarche ?? ''}
+                onChange={(e) => {
+                  const value = e.target.value || undefined
+                  setFilters((f) => ({ ...f, secteur: value, typeMarche: undefined, page: 0 }))
+                }}
               >
                 <option value="">Toutes catégories</option>
-                <option value="SERVICES">Services</option>
-                <option value="TRAVAUX">BTP / Travaux</option>
-                <option value="FOURNITURES">Fournitures</option>
+                {filterOptions.categories.map((category) => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
               </select>
             </div>
             <div className="u-filtre-group">
-              <label>Région</label>
+              <label>Région / ville</label>
               <select
                 value={filters.region ?? ''}
                 onChange={(e) => setFilters((f) => ({ ...f, region: e.target.value || undefined, page: 0 }))}
               >
-                <option value="">Toutes régions</option>
-                <option value="Casablanca-Settat">Casablanca-Settat</option>
-                <option value="Rabat-Salé-Kénitra">Rabat-Salé-Kénitra</option>
-                <option value="Souss-Massa">Souss-Massa</option>
-                <option value="Marrakech-Safi">Marrakech-Safi</option>
-                <option value="Fès-Meknès">Fès-Meknès</option>
-                <option value="Tanger-Tétouan-Al Hoceïma">Tanger-Tétouan-Al Hoceïma</option>
-                <option value="Oriental">Oriental</option>
-                <option value="Béni Mellal-Khénifra">Béni Mellal-Khénifra</option>
+                <option value="">Toutes localisations</option>
+                {filterOptions.localisations.map((localisation) => (
+                  <option key={localisation} value={localisation}>{localisation}</option>
+                ))}
               </select>
             </div>
             <div className="u-filtre-group">
               <label>Statut</label>
               <select
                 value={filters.statut ?? ''}
-                onChange={(e) => setFilters((f) => ({ ...f, statut: (e.target.value as any) || undefined, page: 0 }))}
+                onChange={(e) => {
+                  const value = e.target.value
+                  setFilters((f) => ({ ...f, statut: isStatutOffre(value) ? value : undefined, page: 0 }))
+                }}
               >
                 <option value="">Tous statuts</option>
                 <option value="OUVERT">Ouvert</option>
                 <option value="CLOS">Clôturé</option>
-                <option value="ATTRIBUE">Attribué</option>
-                <option value="ANNULE">Annulé</option>
               </select>
             </div>
             <div className="u-filtre-group">
               <label>Date de publication</label>
-              <input type="date" onChange={() => setFilters((f) => ({ ...f, page: 0 }))} />
+              <input
+                type="date"
+                value={filters.dateMin ?? ''}
+                onChange={(e) => setFilters((f) => ({ ...f, dateMin: e.target.value || undefined, page: 0 }))}
+              />
             </div>
             <div className="u-filtre-group">
-              <label>Date limite</label>
-              <input type="date" onChange={() => setFilters((f) => ({ ...f, page: 0 }))} />
+              <label>Date limite maximum</label>
+              <input
+                type="date"
+                value={filters.dateLimiteMax ?? ''}
+                onChange={(e) => setFilters((f) => ({ ...f, dateLimiteMax: e.target.value || undefined, page: 0 }))}
+              />
             </div>
           </div>
 
-          {(filters.region || filters.typeMarche || filters.statut || filters.search) && (
+          {(filters.region || filters.secteur || filters.statut || filters.search || filters.dateMin || filters.dateLimiteMax) && (
             <div className="u-tags-actifs">
               <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600 }}>Filtres actifs :</span>
-              {filters.typeMarche && (
-                <span className="u-tag" onClick={() => setFilters((f) => ({ ...f, typeMarche: undefined }))}>
-                  <i className="fa-solid fa-tag" aria-hidden /> {filters.typeMarche}
+              {filters.secteur && (
+                <span className="u-tag" onClick={() => setFilters((f) => ({ ...f, secteur: undefined, page: 0 }))}>
+                  <i className="fa-solid fa-tag" aria-hidden /> {filters.secteur}
                   <i className="fa-solid fa-xmark" aria-hidden />
                 </span>
               )}
               {filters.region && (
-                <span className="u-tag" onClick={() => setFilters((f) => ({ ...f, region: undefined }))}>
+                <span className="u-tag" onClick={() => setFilters((f) => ({ ...f, region: undefined, page: 0 }))}>
                   <i className="fa-solid fa-location-dot" aria-hidden /> {filters.region}
                   <i className="fa-solid fa-xmark" aria-hidden />
                 </span>
               )}
               {filters.statut && (
-                <span className="u-tag" onClick={() => setFilters((f) => ({ ...f, statut: undefined }))}>
+                <span className="u-tag" onClick={() => setFilters((f) => ({ ...f, statut: undefined, page: 0 }))}>
                   <i className="fa-solid fa-circle-dot" aria-hidden /> {filters.statut}
                   <i className="fa-solid fa-xmark" aria-hidden />
                 </span>
@@ -215,7 +216,6 @@ export default function MarchesPage() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="u-table-section">
         <div className="u-table-header">
           <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -276,7 +276,7 @@ export default function MarchesPage() {
                 </tr>
               ) : (
                 content.map((offre) => {
-                  const badge = typeBadge(offre.typeMarche)
+                  const badge = typeBadge(offre.secteur || offre.typeMarche)
                   const days = daysUntil(offre.dateLimiteSoumission)
                   const isUrgent = days !== null && days >= 0 && days <= 2
                   return (
@@ -311,7 +311,7 @@ export default function MarchesPage() {
                         </div>
                         {days !== null && (
                           <div className="date-sub">
-                            {days < 0 ? 'Clôturé' : days === 0 ? "Aujourd'hui" : `dans ${days}j`}
+                            {days < 0 ? 'Clôturé' : days === 0 ? "Clôture aujourd'hui" : `dans ${days} jour${days > 1 ? 's' : ''}`}
                           </div>
                         )}
                       </td>
@@ -326,7 +326,7 @@ export default function MarchesPage() {
                           <i className="fa-solid fa-eye" aria-hidden /> Voir
                         </a>
                         <button
-                          className={`btn-action btn-suivi`}
+                          className={`btn-action btn-suivi${offre.suivi ? ' ' : ''}`}
                           style={offre.suivi ? { color: 'var(--green)', borderColor: 'var(--green)' } : {}}
                           onClick={() => handleSuiviChange(offre.id, offre.suivi ? 'Archivé' : 'Intéressant')}
                         >

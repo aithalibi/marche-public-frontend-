@@ -2,13 +2,11 @@
 
 import { useComptes } from '@/hooks/useAdmin'
 import Spinner from '@/components/ui/Spinner'
-import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import { formatDate } from '@/lib/utils'
-import { Trash2 } from 'lucide-react'
 
 export default function ComptesPage() {
-  const { comptes, isLoading, error, toggle, remove } = useComptes()
+  const { comptes, isLoading, error, setRole } = useComptes()
 
   if (isLoading) return <div className="flex justify-center py-12"><Spinner /></div>
   if (error) return <p className="text-red-500 text-center py-8">Erreur lors du chargement.</p>
@@ -25,10 +23,10 @@ export default function ComptesPage() {
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               <th className="text-left px-4 py-3 font-medium text-gray-600">Utilisateur</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">Rôle</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">Role</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">Statut</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">Inscrit le</th>
-              <th className="px-4 py-3" />
+              <th className="text-left px-4 py-3 font-medium text-gray-600">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -44,28 +42,18 @@ export default function ComptesPage() {
                   </Badge>
                 </td>
                 <td className="px-4 py-3">
-                  <button
-                    onClick={() => toggle(compte.id, !compte.actif)}
-                    className="focus:outline-none"
-                  >
-                    <Badge variant={compte.actif ? 'green' : 'red'}>
-                      {compte.actif ? 'Actif' : 'Désactivé'}
-                    </Badge>
-                  </button>
+                  <Badge variant={statusVariant(compte.statut)}>
+                    {statusLabel(compte.statut)}
+                  </Badge>
                 </td>
                 <td className="px-4 py-3 text-gray-500">{formatDate(compte.createdAt)}</td>
-                <td className="px-4 py-3 text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (confirm(`Supprimer le compte de ${compte.prenom} ${compte.nom} ?`)) {
-                        remove(compte.id)
-                      }
-                    }}
+                <td className="px-4 py-3">
+                  <button
+                    onClick={() => setRole(compte.id, compte.role === 'ADMIN' ? 'USER' : 'ADMIN')}
+                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
                   >
-                    <Trash2 className="h-4 w-4 text-red-400" />
-                  </Button>
+                    {compte.role === 'ADMIN' ? 'Passer en USER' : 'Passer en ADMIN'}
+                  </button>
                 </td>
               </tr>
             ))}
@@ -73,9 +61,39 @@ export default function ComptesPage() {
         </table>
 
         {comptes.length === 0 && (
-          <p className="text-center py-8 text-gray-400">Aucun compte trouvé.</p>
+          <p className="text-center py-8 text-gray-400">Aucun compte trouve.</p>
         )}
       </div>
     </div>
   )
+}
+
+function statusVariant(statut?: string) {
+  switch (statut) {
+    case 'ACTIF':
+      return 'green' as const
+    case 'DESACTIVE':
+      return 'red' as const
+    case 'PROFIL_INCOMPLET':
+      return 'yellow' as const
+    case 'EN_ATTENTE_ACTIVATION':
+      return 'orange' as const
+    default:
+      return 'gray' as const
+  }
+}
+
+function statusLabel(statut?: string) {
+  switch (statut) {
+    case 'ACTIF':
+      return 'Actif'
+    case 'DESACTIVE':
+      return 'Desactive'
+    case 'PROFIL_INCOMPLET':
+      return 'Profil incomplet'
+    case 'EN_ATTENTE_ACTIVATION':
+      return 'En attente'
+    default:
+      return statut ?? 'Inconnu'
+  }
 }

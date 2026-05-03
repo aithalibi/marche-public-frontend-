@@ -2,10 +2,18 @@
 
 import { useState } from 'react'
 import { useOffres } from '@/hooks/useOffres'
-import type { OffresFilters } from '@/types'
+import type { OffresFilters, StatutOffre, TypeMarche } from '@/types'
+
+function isTypeMarche(value: string): value is TypeMarche {
+  return value === 'SERVICES' || value === 'TRAVAUX' || value === 'FOURNITURES' || value === 'CONCESSION'
+}
+
+function isStatutOffre(value: string): value is StatutOffre {
+  return value === 'OUVERT' || value === 'CLOS' || value === 'ATTRIBUE' || value === 'ANNULE'
+}
 
 function formatDate(dateStr: string) {
-  if (!dateStr) return '—'
+  if (!dateStr) return 'â€”'
   const d = new Date(dateStr)
   return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
@@ -54,29 +62,28 @@ export default function CorrespondancesPage() {
       <div className="u-page-header">
         <div className="u-page-title">
           <h2><i className="fa-solid fa-envelope" aria-hidden /> Correspondances</h2>
-          <p>Marchés correspondant à votre profil et vos préférences de veille</p>
+          <p>MarchÃ©s correspondant Ã  votre profil et vos prÃ©fÃ©rences de veille</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="u-btn-icon">
-            <i className="fa-solid fa-sliders" aria-hidden /> Modifier mes préférences
+            <i className="fa-solid fa-sliders" aria-hidden /> Modifier mes prÃ©fÃ©rences
           </button>
         </div>
       </div>
 
-      {/* Stats */}
       <div className="u-stats-grid">
         <div className="u-stat-card">
           <div className="u-stat-icon blue"><i className="fa-solid fa-envelopes-bulk" aria-hidden /></div>
           <div className="u-stat-body">
             <div className="u-stat-label">Correspondances totales</div>
-            <div className="u-stat-number">{isLoading ? '…' : total.toLocaleString('fr-FR')}</div>
-            <div className="u-stat-sub green"><i className="fa-solid fa-arrow-trend-up" aria-hidden /> Marchés actifs</div>
+            <div className="u-stat-number">{isLoading ? 'â€¦' : total.toLocaleString('fr-FR')}</div>
+            <div className="u-stat-sub green"><i className="fa-solid fa-arrow-trend-up" aria-hidden /> MarchÃ©s actifs</div>
           </div>
         </div>
         <div className="u-stat-card">
           <div className="u-stat-icon amber"><i className="fa-solid fa-hourglass-half" aria-hidden /></div>
           <div className="u-stat-body">
-            <div className="u-stat-label">Échéances proches</div>
+            <div className="u-stat-label">Ã‰chÃ©ances proches</div>
             <div className="u-stat-number">{urgentCount}</div>
             <div className="u-stat-sub amber"><i className="fa-solid fa-clock" aria-hidden /> Dans les 5 prochains jours</div>
           </div>
@@ -84,28 +91,27 @@ export default function CorrespondancesPage() {
         <div className="u-stat-card">
           <div className="u-stat-icon green"><i className="fa-solid fa-star" aria-hidden /></div>
           <div className="u-stat-body">
-            <div className="u-stat-label">Nouveaux aujourd'hui</div>
-            <div className="u-stat-number">—</div>
-            <div className="u-stat-sub green"><i className="fa-solid fa-plus" aria-hidden /> Mise à jour en continu</div>
+            <div className="u-stat-label">Nouveaux aujourd&apos;hui</div>
+            <div className="u-stat-number">â€”</div>
+            <div className="u-stat-sub green"><i className="fa-solid fa-plus" aria-hidden /> Mise Ã  jour en continu</div>
           </div>
         </div>
         <div className="u-stat-card">
           <div className="u-stat-icon teal"><i className="fa-solid fa-bullseye" aria-hidden /></div>
           <div className="u-stat-body">
             <div className="u-stat-label">Taux de pertinence</div>
-            <div className="u-stat-number">—</div>
-            <div className="u-stat-sub teal"><i className="fa-solid fa-chart-line" aria-hidden /> Basé sur vos secteurs</div>
+            <div className="u-stat-number">â€”</div>
+            <div className="u-stat-sub teal"><i className="fa-solid fa-chart-line" aria-hidden /> BasÃ© sur vos secteurs</div>
           </div>
         </div>
       </div>
 
-      {/* Alert */}
       {urgentCount > 0 && (
         <div className="u-alert-banner">
           <i className="fa-solid fa-triangle-exclamation" aria-hidden />
           <span>
             <strong>Attention :</strong>{' '}
-            {urgentCount} correspondance{urgentCount > 1 ? 's arrivent' : ' arrive'} à clôture dans les 5 prochains jours.
+            {urgentCount} correspondance{urgentCount > 1 ? 's arrivent' : ' arrive'} Ã  clÃ´ture dans les 5 prochains jours.
           </span>
           <a className="u-alert-link">
             Voir les urgences <i className="fa-solid fa-arrow-right" aria-hidden />
@@ -113,7 +119,6 @@ export default function CorrespondancesPage() {
         </div>
       )}
 
-      {/* Search */}
       <div className="u-search-panel">
         <div className="u-search-header">
           <i className="fa-solid fa-magnifying-glass" aria-hidden /> Filtrer les correspondances
@@ -124,7 +129,7 @@ export default function CorrespondancesPage() {
               <i className="fa-solid fa-magnifying-glass" aria-hidden />
               <input
                 type="text"
-                placeholder="Mot-clé, intitulé, acheteur..."
+                placeholder="Mot-clÃ©, intitulÃ©, acheteur..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -134,31 +139,34 @@ export default function CorrespondancesPage() {
               <i className="fa-solid fa-magnifying-glass" aria-hidden /> Filtrer
             </button>
             <button className="u-btn-reset" onClick={handleReset}>
-              <i className="fa-solid fa-rotate-left" aria-hidden /> Réinitialiser
+              <i className="fa-solid fa-rotate-left" aria-hidden /> RÃ©initialiser
             </button>
           </div>
           <div className="u-filtres-grid">
             <div className="u-filtre-group">
-              <label>Catégorie</label>
+              <label>CatÃ©gorie</label>
               <select
                 value={filters.typeMarche ?? ''}
-                onChange={(e) => setFilters((f) => ({ ...f, typeMarche: (e.target.value as any) || undefined, page: 0 }))}
+                onChange={(e) => {
+                  const value = e.target.value
+                  setFilters((f) => ({ ...f, typeMarche: isTypeMarche(value) ? value : undefined, page: 0 }))
+                }}
               >
-                <option value="">Toutes catégories</option>
+                <option value="">Toutes catÃ©gories</option>
                 <option value="SERVICES">Services</option>
                 <option value="TRAVAUX">BTP / Travaux</option>
                 <option value="FOURNITURES">Fournitures</option>
               </select>
             </div>
             <div className="u-filtre-group">
-              <label>Région</label>
+              <label>RÃ©gion</label>
               <select
                 value={filters.region ?? ''}
                 onChange={(e) => setFilters((f) => ({ ...f, region: e.target.value || undefined, page: 0 }))}
               >
-                <option value="">Toutes régions</option>
+                <option value="">Toutes rÃ©gions</option>
                 <option value="Casablanca-Settat">Casablanca-Settat</option>
-                <option value="Rabat-Salé-Kénitra">Rabat-Salé-Kénitra</option>
+                <option value="Rabat-SalÃ©-KÃ©nitra">Rabat-SalÃ©-KÃ©nitra</option>
                 <option value="Souss-Massa">Souss-Massa</option>
                 <option value="Marrakech-Safi">Marrakech-Safi</option>
               </select>
@@ -167,12 +175,15 @@ export default function CorrespondancesPage() {
               <label>Statut</label>
               <select
                 value={filters.statut ?? ''}
-                onChange={(e) => setFilters((f) => ({ ...f, statut: (e.target.value as any) || undefined, page: 0 }))}
+                onChange={(e) => {
+                  const value = e.target.value
+                  setFilters((f) => ({ ...f, statut: isStatutOffre(value) ? value : undefined, page: 0 }))
+                }}
               >
                 <option value="OUVERT">Ouvert</option>
                 <option value="">Tous statuts</option>
-                <option value="CLOS">Clôturé</option>
-                <option value="ATTRIBUE">Attribué</option>
+                <option value="CLOS">ClÃ´turÃ©</option>
+                <option value="ATTRIBUE">AttribuÃ©</option>
               </select>
             </div>
             <div className="u-filtre-group">
@@ -183,14 +194,13 @@ export default function CorrespondancesPage() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="u-table-section">
         <div className="u-table-header">
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <div className="u-table-title">
               <i className="fa-solid fa-envelope-open-text" aria-hidden /> Mes correspondances
             </div>
-            <span className="u-result-count">{total.toLocaleString('fr-FR')} résultats</span>
+            <span className="u-result-count">{total.toLocaleString('fr-FR')} rÃ©sultats</span>
           </div>
           <div className="u-table-actions">
             <button className="u-btn-icon"><i className="fa-solid fa-file-excel" aria-hidden /> Excel</button>
@@ -210,14 +220,14 @@ export default function CorrespondancesPage() {
         {isLoading && (
           <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--muted)' }}>
             <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: 22, marginBottom: 8 }} aria-hidden />
-            <div style={{ fontSize: 13 }}>Chargement des correspondances…</div>
+            <div style={{ fontSize: 13 }}>Chargement des correspondancesâ€¦</div>
           </div>
         )}
 
         {error && (
           <div style={{ padding: '40px 0', textAlign: 'center', color: '#b91c1c', fontSize: 13 }}>
             <i className="fa-solid fa-circle-exclamation" style={{ marginRight: 6 }} aria-hidden />
-            Erreur lors du chargement. Veuillez réessayer.
+            Erreur lors du chargement. Veuillez rÃ©essayer.
           </div>
         )}
 
@@ -226,8 +236,8 @@ export default function CorrespondancesPage() {
             <thead>
               <tr>
                 <th style={{ width: 32 }}><input type="checkbox" /></th>
-                <th>Référence / Intitulé</th>
-                <th>Catégorie</th>
+                <th>RÃ©fÃ©rence / IntitulÃ©</th>
+                <th>CatÃ©gorie</th>
                 <th>Acheteur</th>
                 <th>Date pub.</th>
                 <th>Date limite</th>
@@ -240,7 +250,7 @@ export default function CorrespondancesPage() {
                 <tr>
                   <td colSpan={8} style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)' }}>
                     <i className="fa-solid fa-inbox" style={{ fontSize: 24, marginBottom: 8, display: 'block' }} aria-hidden />
-                    Aucune correspondance pour vos critères actuels.
+                    Aucune correspondance pour vos critÃ¨res actuels.
                   </td>
                 </tr>
               ) : (
@@ -280,7 +290,7 @@ export default function CorrespondancesPage() {
                         </div>
                         {days !== null && (
                           <div className="date-sub">
-                            {days < 0 ? 'Clôturé' : days === 0 ? "Aujourd'hui" : `dans ${days}j`}
+                            {days < 0 ? 'ClÃ´turÃ©' : days === 0 ? "Aujourd'hui" : `dans ${days}j`}
                           </div>
                         )}
                       </td>
@@ -319,8 +329,8 @@ export default function CorrespondancesPage() {
         <div className="pagination-wrap">
           <div className="pagination-info">
             {total > 0
-              ? `Affichage de ${currentPage * (filters.size ?? 20) + 1} à ${Math.min((currentPage + 1) * (filters.size ?? 20), total)} sur ${total.toLocaleString('fr-FR')} résultats`
-              : 'Aucun résultat'}
+              ? `Affichage de ${currentPage * (filters.size ?? 20) + 1} Ã  ${Math.min((currentPage + 1) * (filters.size ?? 20), total)} sur ${total.toLocaleString('fr-FR')} rÃ©sultats`
+              : 'Aucun rÃ©sultat'}
           </div>
           <div className="pagination-btns">
             <button className="page-btn" disabled={currentPage === 0} onClick={() => setFilters((f) => ({ ...f, page: (f.page ?? 0) - 1 }))}>
@@ -331,7 +341,7 @@ export default function CorrespondancesPage() {
                 {i + 1}
               </button>
             ))}
-            {totalPages > 5 && <button className="page-btn">…</button>}
+            {totalPages > 5 && <button className="page-btn">â€¦</button>}
             <button className="page-btn" disabled={currentPage + 1 >= totalPages} onClick={() => setFilters((f) => ({ ...f, page: (f.page ?? 0) + 1 }))}>
               <i className="fa-solid fa-chevron-right" style={{ fontSize: 10 }} aria-hidden />
             </button>

@@ -4,7 +4,7 @@ import type { SuiviStatus } from '@/types'
 
 export function useSuivi() {
   const { data, error, isLoading, mutate } = useSWR('/api/offres/suivi', () =>
-    getOffres({ size: 100 }) // fetch offres that have suivi
+    getOffres({ size: 1000 }) // fetch a wide enough slice to resolve followed offers client-side
   )
 
   const offresWithSuivi = data?.content.filter((o) => o.suivi) ?? []

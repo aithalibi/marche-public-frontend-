@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import TopStrip from '@/components/TopStrip'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
@@ -31,13 +32,13 @@ export default function ArchitecturePage() {
         <div className="max-w-[720px] mx-auto px-4 pb-16">
           <div className="rounded-[14px] border border-dashed border-black/[0.15] bg-[#FAFAF9] p-4 sm:p-6">
             {/* <img> pour rendu 1:1 du SVG (évite toute optimisation qui déformerait le fichier source). */}
-            <img
+            <Image
               src="/architecture_marches_publics_finale.svg"
               alt="Schéma d’architecture : Next.js 14, Spring Boot 3, module Python, MongoDB, Docker"
               width={680}
               height={873}
               className="w-full h-auto block mx-auto"
-              decoding="async"
+              priority
             />
           </div>
         </div>

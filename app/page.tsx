@@ -2,6 +2,7 @@ import TopStrip from '@/components/TopStrip'
 import Navbar from '@/components/Navbar'
 import HeroSection from '@/components/HeroSection'
 import StatsSection from '@/components/StatsSection'
+import TableSection from '@/components/TableSection'
 import StepsSection from '@/components/StepsSection'
 import SectorsSection from '@/components/SectorsSection'
 import CTASection from '@/components/CTASection'
@@ -14,6 +15,7 @@ export default function HomePage() {
       <Navbar />
       <HeroSection />
       <StatsSection />
+      <TableSection />
       <StepsSection />
       <SectorsSection />
       <CTASection />

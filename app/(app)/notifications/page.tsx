@@ -4,8 +4,8 @@ import { useNotifications } from '@/hooks/useNotifications'
 import { formatDistanceToNow } from '@/lib/utils'
 
 const TYPE_CONFIG: Record<string, { label: string; icon: string; color: string; bg: string }> = {
-  NOUVEAU_MARCHE: { label: 'Nouveau marché', icon: 'fa-file-circle-plus', color: 'var(--primary)', bg: '#EFF6FF' },
-  CLOTURE: { label: 'Clôture imminente', icon: 'fa-hourglass-end', color: 'var(--amber)', bg: '#FFFBEB' },
+  NOUVEAU_MARCHE: { label: 'Nouveau marchÃ©', icon: 'fa-file-circle-plus', color: 'var(--primary)', bg: '#EFF6FF' },
+  CLOTURE: { label: 'ClÃ´ture imminente', icon: 'fa-hourglass-end', color: 'var(--amber)', bg: '#FFFBEB' },
   MODIFICATION: { label: 'Modification', icon: 'fa-pen-to-square', color: 'var(--teal)', bg: '#F0FDFA' },
 }
 
@@ -24,7 +24,7 @@ export default function NotificationsPage() {
               </span>
             )}
           </h2>
-          <p>Alertes et mises à jour relatives à vos marchés surveillés</p>
+          <p>Alertes et mises Ã  jour relatives Ã  vos marchÃ©s surveillÃ©s</p>
         </div>
         {unreadCount > 0 && (
           <button className="u-btn-icon" onClick={markAllAsRead}>
@@ -36,7 +36,7 @@ export default function NotificationsPage() {
       {isLoading && (
         <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--muted)' }}>
           <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: 22, marginBottom: 8 }} aria-hidden />
-          <div style={{ fontSize: 13 }}>Chargement des notifications…</div>
+          <div style={{ fontSize: 13 }}>Chargement des notificationsâ€¦</div>
         </div>
       )}
 
@@ -45,7 +45,7 @@ export default function NotificationsPage() {
           <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--muted)' }}>
             <i className="fa-regular fa-bell" style={{ fontSize: 36, marginBottom: 12, display: 'block', opacity: 0.3 }} aria-hidden />
             <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>Aucune notification</div>
-            <div style={{ fontSize: 13 }}>Vous serez notifié dès qu'un marché correspond à vos alertes.</div>
+            <div style={{ fontSize: 13 }}>Vous serez notifiÃ© dÃ¨s qu&apos;un marchÃ© correspond Ã  vos alertes.</div>
           </div>
         </div>
       )}
@@ -76,12 +76,10 @@ export default function NotificationsPage() {
                   transition: 'background .15s',
                 }}
               >
-                {/* Icon */}
                 <div style={{ width: 38, height: 38, borderRadius: 9, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
                   <i className={`fa-solid ${cfg.icon}`} style={{ color: cfg.color, fontSize: 15 }} aria-hidden />
                 </div>
 
-                {/* Content */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: cfg.color, textTransform: 'uppercase', letterSpacing: '.5px' }}>
@@ -102,7 +100,6 @@ export default function NotificationsPage() {
                   )}
                 </div>
 
-                {/* Time */}
                 <div style={{ fontSize: 11, color: 'var(--muted)', whiteSpace: 'nowrap', flexShrink: 0, marginTop: 2 }}>
                   <i className="fa-regular fa-clock" style={{ marginRight: 4 }} aria-hidden />
                   {formatDistanceToNow(n.createdAt)}

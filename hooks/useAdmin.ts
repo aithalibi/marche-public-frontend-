@@ -1,32 +1,26 @@
 import useSWR from 'swr'
-import { getComptes, getScrapingJobs, triggerScraping, toggleCompteActif, deleteCompte } from '@/lib/api/admin'
+import { getComptes, getScrapingJobs, triggerScraping, updateCompteRole } from '@/lib/api/admin'
 
 export function useComptes() {
-  const { data, error, isLoading, mutate } = useSWR('/api/admin/comptes', getComptes)
+  const { data, error, isLoading, mutate } = useSWR('/api/admin/users', getComptes)
 
-  async function toggle(id: string, actif: boolean) {
-    await toggleCompteActif(id, actif)
+  async function setRole(id: string, role: 'USER' | 'ADMIN') {
+    await updateCompteRole(id, role)
     mutate()
   }
 
-  async function remove(id: string) {
-    await deleteCompte(id)
-    mutate()
-  }
-
-  return { comptes: data ?? [], isLoading, error, toggle, remove }
+  return { comptes: data ?? [], isLoading, error, setRole }
 }
 
 export function useScrapingJobs() {
-  const { data, error, isLoading, mutate } = useSWR('/api/admin/scraping/jobs', getScrapingJobs, {
+  const { data, error, isLoading, mutate } = useSWR('/api/admin/scraper/logs', getScrapingJobs, {
     refreshInterval: 10_000,
   })
 
-  async function trigger() {
-    const job = await triggerScraping()
-    mutate()
-    return job
+  async function runScraping() {
+    await triggerScraping()
+    await mutate()
   }
 
-  return { jobs: data ?? [], isLoading, error, trigger }
+  return { jobs: data ?? [], isLoading, error, refresh: mutate, runScraping }
 }

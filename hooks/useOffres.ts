@@ -3,7 +3,7 @@ import { getOffres, getOffre, updateSuivi, removeSuivi } from '@/lib/api/offres'
 import type { OffresFilters, SuiviStatus } from '@/types'
 
 export function useOffres(filters: OffresFilters = {}) {
-  const key = ['/api/offres', JSON.stringify(filters)]
+  const key = ['/api/offres/search', JSON.stringify(filters)]
   const { data, error, isLoading, mutate } = useSWR(key, () => getOffres(filters))
   return { data, error, isLoading, mutate }
 }

@@ -1,238 +1,181 @@
 'use client'
 
+import Link from 'next/link'
+import { useComptes, useScrapingJobs } from '@/hooks/useAdmin'
+import Spinner from '@/components/ui/Spinner'
+import { formatDate, formatDistanceToNow } from '@/lib/utils'
+
 export default function AdminDashboard() {
+  const { comptes, isLoading: isLoadingUsers } = useComptes()
+  const { jobs, isLoading: isLoadingJobs, refresh } = useScrapingJobs()
+
+  if (isLoadingUsers || isLoadingJobs) {
+    return <div className="flex justify-center py-16"><Spinner /></div>
+  }
+
+  const activeUsers = comptes.filter((compte) => compte.statut === 'ACTIF').length
+  const admins = comptes.filter((compte) => compte.role === 'ADMIN').length
+  const pendingUsers = comptes.filter((compte) => compte.statut === 'EN_ATTENTE_ACTIVATION').length
+  const runningJobs = jobs.filter((job) => job.status === 'EN_COURS').length
+  const recentUsers = [...comptes].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)).slice(0, 5)
+  const recentLogs = [...jobs].sort((a, b) => +new Date(b.startedAt) - +new Date(a.startedAt)).slice(0, 6)
+
   return (
     <>
-      {/* Stats */}
       <div className="a-stats">
-        <div className="a-stat-card c1">
-          <div className="a-stat-ico-wrap">
-            <div>
-              <div className="a-stat-val">12 847</div>
-              <div className="a-stat-lbl">Marchés en base</div>
-              <div className="a-stat-chg up">
-                <i className="fa-solid fa-arrow-trend-up" aria-hidden /> +248 aujourd&apos;hui
-              </div>
-            </div>
-            <div className="a-stat-ico c1">
-              <i className="fa-solid fa-database" aria-hidden />
-            </div>
-          </div>
-        </div>
-
-        <div className="a-stat-card c2">
-          <div className="a-stat-ico-wrap">
-            <div>
-              <div className="a-stat-val">4</div>
-              <div className="a-stat-lbl">Robots actifs</div>
-              <div className="a-stat-chg up">
-                <i className="fa-solid fa-circle-check" aria-hidden /> Tous opérationnels
-              </div>
-            </div>
-            <div className="a-stat-ico c2">
-              <i className="fa-solid fa-robot" aria-hidden />
-            </div>
-          </div>
-        </div>
-
-        <div className="a-stat-card c3">
-          <div className="a-stat-ico-wrap">
-            <div>
-              <div className="a-stat-val">862</div>
-              <div className="a-stat-lbl">Utilisateurs inscrits</div>
-              <div className="a-stat-chg up">
-                <i className="fa-solid fa-arrow-trend-up" aria-hidden /> +12 cette semaine
-              </div>
-            </div>
-            <div className="a-stat-ico c3">
-              <i className="fa-solid fa-users" aria-hidden />
-            </div>
-          </div>
-        </div>
-
-        <div className="a-stat-card c4">
-          <div className="a-stat-ico-wrap">
-            <div>
-              <div className="a-stat-val">98.4%</div>
-              <div className="a-stat-lbl">Taux de détection</div>
-              <div className="a-stat-chg up">
-                <i className="fa-solid fa-arrow-trend-up" aria-hidden /> +0.3% ce mois
-              </div>
-            </div>
-            <div className="a-stat-ico c4">
-              <i className="fa-solid fa-bullseye" aria-hidden />
-            </div>
-          </div>
-        </div>
+        <StatCard value={String(comptes.length)} label="Utilisateurs inscrits" sub={`${activeUsers} actifs`} icon="fa-users" tone="c3" />
+        <StatCard value={String(admins)} label="Admins" sub="Gestion des roles" icon="fa-shield-halved" tone="c4" />
+        <StatCard value={String(jobs.length)} label="Cycles de scraping" sub={`${runningJobs} en cours`} icon="fa-robot" tone="c2" />
+        <StatCard value={String(pendingUsers)} label="Comptes en attente" sub="A surveiller" icon="fa-user-clock" tone="c1" />
       </div>
 
-      {/* Robots + Logs */}
       <div className="a-grid2">
-        {/* Robots */}
         <div className="a-card">
           <div className="a-card-title">
             <div className="a-ct-left">
-              <i className="fa-solid fa-robot" aria-hidden /> État des robots
+              <i className="fa-solid fa-robot" aria-hidden /> Activite scraping
             </div>
-            <a className="a-card-action">
+            <button type="button" className="a-card-action" onClick={() => refresh()}>
               <i className="fa-solid fa-rotate" aria-hidden /> Actualiser
-            </a>
+            </button>
           </div>
 
-          <div className="scraper-row">
-            <div className="scraper-ico">
-              <i className="fa-solid fa-spider" aria-hidden />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div className="scraper-name">Robot Principal — marchespublics.gov.ma</div>
-              <div className="scraper-url">AO + Bons de commande</div>
-              <div className="scraper-meta">
-                <span><span className="pulse" /> Actif</span>
-                <span><i className="fa-solid fa-clock" aria-hidden /> 13:22</span>
-                <span><i className="fa-solid fa-file-lines" aria-hidden /> 248 collectés</span>
+          {recentLogs.length === 0 ? (
+            <p className="text-sm text-gray-400">Aucun log de scraping disponible.</p>
+          ) : (
+            recentLogs.map((job) => (
+              <div key={job.id} className="scraper-row">
+                <div className="scraper-ico">
+                  <i className={`fa-solid ${job.status === 'ERREUR' ? 'fa-triangle-exclamation' : job.status === 'EN_COURS' ? 'fa-rotate' : 'fa-circle-check'}`} aria-hidden />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div className="scraper-name">{statusLabel(job.status)}</div>
+                  <div className="scraper-url">{job.message ?? 'Execution de scraping'}</div>
+                  <div className="scraper-meta">
+                    <span>{job.offresCollectees} offres</span>
+                    <span><i className="fa-solid fa-clock" aria-hidden /> {formatDistanceToNow(job.startedAt)}</span>
+                    {job.finishedAt && <span><i className="fa-solid fa-flag-checkered" aria-hidden /> {formatDistanceToNow(job.finishedAt)}</span>}
+                  </div>
+                </div>
               </div>
-              <div className="prog" style={{ marginTop: 8 }}>
-                <div className="prog-fill" style={{ width: '78%' }} />
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button className="a-btn-ghost"><i className="fa-solid fa-pause" aria-hidden /></button>
-              <button className="a-btn-ghost"><i className="fa-solid fa-rotate-right" aria-hidden /></button>
-            </div>
-          </div>
-
-          <div className="scraper-row">
-            <div className="scraper-ico">
-              <i className="fa-solid fa-spider" aria-hidden />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div className="scraper-name">Robot TGR — Trésorerie Générale</div>
-              <div className="scraper-url">tgr.gov.ma · Marchés réservés</div>
-              <div className="scraper-meta">
-                <span><span className="pulse" /> Actif</span>
-                <span><i className="fa-solid fa-clock" aria-hidden /> 12:48</span>
-                <span><i className="fa-solid fa-file-lines" aria-hidden /> 34 collectés</span>
-              </div>
-              <div className="prog" style={{ marginTop: 8 }}>
-                <div className="prog-fill" style={{ width: '45%' }} />
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button className="a-btn-ghost"><i className="fa-solid fa-pause" aria-hidden /></button>
-              <button className="a-btn-ghost"><i className="fa-solid fa-rotate-right" aria-hidden /></button>
-            </div>
-          </div>
+            ))
+          )}
         </div>
 
-        {/* Logs */}
         <div className="a-card">
           <div className="a-card-title">
             <div className="a-ct-left">
-              <i className="fa-solid fa-terminal" aria-hidden /> Logs en temps réel
+              <i className="fa-solid fa-terminal" aria-hidden /> Derniers logs
             </div>
-            <a className="a-card-action">
-              <i className="fa-solid fa-expand" aria-hidden /> Plein écran
-            </a>
+            <Link className="a-card-action" href="/admin/scraping">
+              <i className="fa-solid fa-arrow-right" aria-hidden /> Voir tout
+            </Link>
           </div>
           <div className="logbox">
-            <div><span className="log-info">[13:42:01]</span> <span className="log-ok">✓ Robot principal — collecte en cours (78%)</span></div>
-            <div><span className="log-info">[13:41:55]</span> <span className="log-ok">✓ 248 marchés indexés en base</span></div>
-            <div><span className="log-info">[13:41:22]</span> <span className="log-warn">⚠ 3 doublons détectés et ignorés</span></div>
-            <div><span className="log-info">[13:40:11]</span> <span className="log-ok">✓ 47 alertes emails envoyées</span></div>
-            <div><span className="log-info">[13:38:07]</span> <span className="log-ok">✓ Matching profils — 12 correspondances</span></div>
-            <div><span className="log-info">[13:37:44]</span> <span className="log-ok">✓ Robot TGR — 34 marchés collectés</span></div>
-            <div><span className="log-info">[13:36:10]</span> <span className="log-info">ℹ Maintenance base données planifiée 02:00</span></div>
-            <div><span className="log-info">[13:30:00]</span> <span className="log-ok">✓ Démarrage cycle collecte #7 du jour</span></div>
+            {recentLogs.length === 0 ? (
+              <div><span className="log-info">[--:--:--]</span> <span className="log-info">Aucune execution enregistree</span></div>
+            ) : (
+              recentLogs.map((job) => (
+                <div key={job.id}>
+                  <span className="log-info">[{new Date(job.startedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}]</span>{' '}
+                  <span className={job.status === 'ERREUR' ? 'log-warn' : job.status === 'EN_COURS' ? 'log-info' : 'log-ok'}>
+                    {job.message ?? `${statusLabel(job.status)} - ${job.offresCollectees} offres`}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
 
-      {/* Users table */}
       <div className="a-card">
         <div className="a-card-title">
           <div className="a-ct-left">
-            <i className="fa-solid fa-users" aria-hidden /> Utilisateurs récents
+            <i className="fa-solid fa-users" aria-hidden /> Utilisateurs recents
           </div>
-          <a className="a-card-action" href="/admin/comptes">
+          <Link className="a-card-action" href="/admin/comptes">
             <i className="fa-solid fa-arrow-right" aria-hidden /> Voir tous
-          </a>
+          </Link>
         </div>
         <table className="a-table">
           <thead>
             <tr>
               <th>Utilisateur</th>
-              <th>Rôle</th>
-              <th>Secteurs</th>
-              <th>Région</th>
+              <th>Role</th>
               <th>Inscription</th>
               <th>Statut</th>
-              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>
-                <div style={{ fontWeight: 600 }}>Ochline Chaimaa</div>
-                <div style={{ fontSize: 11, color: 'var(--muted)' }}>o.chaimaa@techma.ma</div>
-              </td>
-              <td><span className="a-badge user"><i className="fa-solid fa-user" aria-hidden /> Utilisateur</span></td>
-              <td><span className="a-badge it">IT</span></td>
-              <td>Souss-Massa</td>
-              <td>01/03/2026</td>
-              <td><span className="a-badge actif"><i className="fa-solid fa-circle-check" aria-hidden /> Actif</span></td>
-              <td style={{ display: 'flex', gap: 5 }}>
-                <button className="a-btn-ghost" style={{ padding: '4px 8px' }}><i className="fa-solid fa-eye" aria-hidden /></button>
-                <button className="a-btn-ghost" style={{ padding: '4px 8px' }}><i className="fa-solid fa-pen" aria-hidden /></button>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <div style={{ fontWeight: 600 }}>Karim Benali</div>
-                <div style={{ fontSize: 11, color: 'var(--muted)' }}>k.benali@btpcasa.ma</div>
-              </td>
-              <td><span className="a-badge user"><i className="fa-solid fa-user" aria-hidden /> Utilisateur</span></td>
-              <td><span className="a-badge btp">BTP</span></td>
-              <td>Casablanca-Settat</td>
-              <td>25/02/2026</td>
-              <td><span className="a-badge actif"><i className="fa-solid fa-circle-check" aria-hidden /> Actif</span></td>
-              <td style={{ display: 'flex', gap: 5 }}>
-                <button className="a-btn-ghost" style={{ padding: '4px 8px' }}><i className="fa-solid fa-eye" aria-hidden /></button>
-                <button className="a-btn-ghost" style={{ padding: '4px 8px' }}><i className="fa-solid fa-pen" aria-hidden /></button>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <div style={{ fontWeight: 600 }}>Sara El Mansouri</div>
-                <div style={{ fontSize: 11, color: 'var(--muted)' }}>s.elmansouri@consult.ma</div>
-              </td>
-              <td><span className="a-badge admin"><i className="fa-solid fa-shield-halved" aria-hidden /> Admin</span></td>
-              <td><span className="a-badge it">IT</span></td>
-              <td>Rabat-Salé</td>
-              <td>10/01/2026</td>
-              <td><span className="a-badge actif"><i className="fa-solid fa-circle-check" aria-hidden /> Actif</span></td>
-              <td style={{ display: 'flex', gap: 5 }}>
-                <button className="a-btn-ghost" style={{ padding: '4px 8px' }}><i className="fa-solid fa-eye" aria-hidden /></button>
-                <button className="a-btn-ghost" style={{ padding: '4px 8px' }}><i className="fa-solid fa-pen" aria-hidden /></button>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <div style={{ fontWeight: 600 }}>Youssef Tazi</div>
-                <div style={{ fontSize: 11, color: 'var(--muted)' }}>y.tazi@marktrade.ma</div>
-              </td>
-              <td><span className="a-badge user"><i className="fa-solid fa-user" aria-hidden /> Utilisateur</span></td>
-              <td><span className="a-badge btp">BTP</span></td>
-              <td>Marrakech-Safi</td>
-              <td>18/02/2026</td>
-              <td><span className="a-badge attente"><i className="fa-solid fa-clock" aria-hidden /> En attente</span></td>
-              <td style={{ display: 'flex', gap: 5 }}>
-                <button className="a-btn-ghost" style={{ padding: '4px 8px' }}><i className="fa-solid fa-eye" aria-hidden /></button>
-                <button className="a-btn-ghost" style={{ padding: '4px 8px' }}><i className="fa-solid fa-pen" aria-hidden /></button>
-              </td>
-            </tr>
+            {recentUsers.map((compte) => (
+              <tr key={compte.id}>
+                <td>
+                  <div style={{ fontWeight: 600 }}>{compte.prenom} {compte.nom}</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>{compte.email}</div>
+                </td>
+                <td>{compte.role}</td>
+                <td>{formatDate(compte.createdAt)}</td>
+                <td>{statusLabelFromCompte(compte.statut)}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
     </>
   )
+}
+
+function StatCard({
+  value,
+  label,
+  sub,
+  icon,
+  tone,
+}: {
+  value: string
+  label: string
+  sub: string
+  icon: string
+  tone: 'c1' | 'c2' | 'c3' | 'c4'
+}) {
+  return (
+    <div className={`a-stat-card ${tone}`}>
+      <div className="a-stat-ico-wrap">
+        <div>
+          <div className="a-stat-val">{value}</div>
+          <div className="a-stat-lbl">{label}</div>
+          <div className="a-stat-chg up">{sub}</div>
+        </div>
+        <div className={`a-stat-ico ${tone}`}>
+          <i className={`fa-solid ${icon}`} aria-hidden />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function statusLabel(status: 'EN_COURS' | 'TERMINE' | 'ERREUR') {
+  switch (status) {
+    case 'EN_COURS':
+      return 'Collecte en cours'
+    case 'TERMINE':
+      return 'Collecte terminee'
+    case 'ERREUR':
+      return 'Collecte en erreur'
+  }
+}
+
+function statusLabelFromCompte(statut?: string) {
+  switch (statut) {
+    case 'ACTIF':
+      return 'Actif'
+    case 'DESACTIVE':
+      return 'Desactive'
+    case 'PROFIL_INCOMPLET':
+      return 'Profil incomplet'
+    case 'EN_ATTENTE_ACTIVATION':
+      return 'En attente'
+    default:
+      return statut ?? 'Inconnu'
+  }
 }

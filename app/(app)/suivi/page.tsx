@@ -61,7 +61,6 @@ export default function SuiviPage() {
             const offres = offresWithSuivi.filter((o) => o.suivi === status)
             return (
               <div key={status} style={{ background: color, border: '1.5px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
-                {/* Column header */}
                 <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <i className={`fa-solid ${icon}`} style={{ color: textColor, fontSize: 13 }} aria-hidden />
@@ -72,7 +71,6 @@ export default function SuiviPage() {
                   </span>
                 </div>
 
-                {/* Cards */}
                 <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: 8, minHeight: 120 }}>
                   {offres.length === 0 && (
                     <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 12 }}>
@@ -116,7 +114,6 @@ export default function SuiviPage() {
                             <i className="fa-regular fa-calendar" aria-hidden /> {formatDate(offre.dateLimiteSoumission)}
                           </div>
                         )}
-                        {/* Status buttons */}
                         <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                           {COLUMNS.filter((c) => c.status !== status).map((c) => (
                             <button
