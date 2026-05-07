@@ -63,7 +63,7 @@ export default function OffreFilters({ filters, onChange }: OffreFiltersProps) {
           Filtres
         </Button>
         {hasFilters && (
-          <Button variant="ghost" size="sm" onClick={reset}>
+          <Button variant="ghost" size="sm" onClick={reset} aria-label="Reinitialiser les filtres">
             <X className="h-4 w-4" />
           </Button>
         )}
@@ -73,8 +73,9 @@ export default function OffreFilters({ filters, onChange }: OffreFiltersProps) {
       {showAdvanced && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-gray-100">
           <div>
-            <label className="text-xs font-medium text-gray-600 mb-1 block">Région</label>
+            <label htmlFor="offre-region-filter" className="text-xs font-medium text-gray-600 mb-1 block">Région</label>
             <select
+              id="offre-region-filter"
               value={filters.region ?? ''}
               onChange={(e) => set('region', e.target.value)}
               className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-arch-violet"
@@ -85,8 +86,9 @@ export default function OffreFilters({ filters, onChange }: OffreFiltersProps) {
           </div>
 
           <div>
-            <label className="text-xs font-medium text-gray-600 mb-1 block">Type de marché</label>
+            <label htmlFor="offre-type-filter" className="text-xs font-medium text-gray-600 mb-1 block">Type de marché</label>
             <select
+              id="offre-type-filter"
               value={filters.typeMarche ?? ''}
               onChange={(e) => set('typeMarche', e.target.value)}
               className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-arch-violet"
@@ -99,8 +101,9 @@ export default function OffreFilters({ filters, onChange }: OffreFiltersProps) {
           </div>
 
           <div>
-            <label className="text-xs font-medium text-gray-600 mb-1 block">Statut</label>
+            <label htmlFor="offre-statut-filter" className="text-xs font-medium text-gray-600 mb-1 block">Statut</label>
             <select
+              id="offre-statut-filter"
               value={filters.statut ?? ''}
               onChange={(e) => set('statut', e.target.value)}
               className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-arch-violet"
