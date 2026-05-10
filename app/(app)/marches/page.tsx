@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useOffreFilters } from '@/hooks/useOffreFilters'
 import { useOffres } from '@/hooks/useOffres'
 import { updateSuivi } from '@/lib/api/offres'
-import type { OffresFilters, StatutOffre, SuiviStatus } from '@/types'
+import type { Offre, OffresFilters, StatutOffre, SuiviStatus } from '@/types'
 
 function isStatutOffre(value: string): value is StatutOffre {
   return value === 'OUVERT' || value === 'CLOS' || value === 'ATTRIBUE' || value === 'ANNULE'
@@ -19,6 +19,11 @@ function formatDate(dateStr: string) {
 function daysUntil(dateStr: string) {
   if (!dateStr) return null
   return Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000)
+}
+
+function openOfficialOffer(url: string) {
+  if (!url) return
+  window.location.assign(url)
 }
 
 function statutBadgeClass(statut: string) {
@@ -67,6 +72,191 @@ function typeBadge(type: string) {
   return { cls: 'badge badge-it', icon: 'fa-tag', label: type || 'Catégorie' }
 }
 
+function exportFileName(extension: 'csv' | 'pdf') {
+  const date = new Date().toISOString().slice(0, 10)
+  return `marches-publics-${date}.${extension}`
+}
+
+function exportRows(offres: Offre[]) {
+  return offres.map((offre) => ({
+    Référence: offre.reference,
+    Intitulé: offre.titre,
+    Catégorie: offre.secteur || offre.typeMarche,
+    Acheteur: offre.acheteur,
+    Région: offre.region,
+    'Date de publication': formatDate(offre.datePublication),
+    'Date limite': formatDate(offre.dateLimiteSoumission),
+    Statut: statutLabel(offre.statut),
+    'Lien officiel': offre.sourceUrl,
+  }))
+}
+
+function csvCell(value: string) {
+  return `"${String(value ?? '').replaceAll('"', '""')}"`
+}
+
+function downloadCsv(offres: Offre[]) {
+  if (offres.length === 0) return
+
+  const rows = exportRows(offres)
+  const headers = Object.keys(rows[0])
+  const csv = [
+    headers.map(csvCell).join(';'),
+    ...rows.map((row) => headers.map((header) => csvCell(row[header as keyof typeof row])).join(';')),
+  ].join('\r\n')
+  const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+
+  link.href = url
+  link.download = exportFileName('csv')
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}
+
+function escapeHtml(value: string) {
+  return String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7E]/g, ' ')
+}
+
+function pdfText(value: string) {
+  return escapeHtml(value).replaceAll('\\', '\\\\').replaceAll('(', '\\(').replaceAll(')', '\\)')
+}
+
+function wrapPdfText(value: string, maxLength: number) {
+  const words = escapeHtml(value).split(/\s+/).filter(Boolean)
+  const lines: string[] = []
+  let current = ''
+
+  words.forEach((word) => {
+    const next = current ? `${current} ${word}` : word
+    if (next.length > maxLength) {
+      if (current) lines.push(current)
+      current = word
+    } else {
+      current = next
+    }
+  })
+
+  if (current) lines.push(current)
+  return lines.slice(0, 4)
+}
+
+function buildPdf(offres: Offre[]) {
+  const pageWidth = 842
+  const pageHeight = 595
+  const margin = 32
+  const rowHeight = 58
+  const rowsPerPage = 8
+  const columns = [
+    { label: 'Reference', x: 32, width: 88 },
+    { label: 'Intitule', x: 126, width: 210 },
+    { label: 'Categorie', x: 342, width: 80 },
+    { label: 'Acheteur', x: 430, width: 132 },
+    { label: 'Region', x: 570, width: 70 },
+    { label: 'Date pub.', x: 646, width: 58 },
+    { label: 'Date limite', x: 710, width: 62 },
+    { label: 'Statut', x: 778, width: 44 },
+  ]
+  const pages: string[] = []
+
+  for (let start = 0; start < offres.length; start += rowsPerPage) {
+    const pageRows = offres.slice(start, start + rowsPerPage)
+    const commands: string[] = [
+      'BT',
+      '/F1 16 Tf',
+      `1 0 0 1 ${margin} ${pageHeight - 36} Tm`,
+      `(Liste des marches publics) Tj`,
+      '/F1 9 Tf',
+      `1 0 0 1 ${margin} ${pageHeight - 54} Tm`,
+      `(${pdfText(`${offres.length} marches exportes le ${new Date().toLocaleDateString('fr-FR')}`)}) Tj`,
+      '/F1 8 Tf',
+    ]
+
+    columns.forEach((column) => {
+      commands.push(`1 0 0 1 ${column.x} ${pageHeight - 82} Tm`)
+      commands.push(`(${pdfText(column.label)}) Tj`)
+    })
+
+    pageRows.forEach((offre, rowIndex) => {
+      const y = pageHeight - 104 - rowIndex * rowHeight
+      const row = exportRows([offre])[0]
+      const values = [
+        row.Référence,
+        row.Intitulé,
+        row.Catégorie,
+        row.Acheteur,
+        row.Région,
+        row['Date de publication'],
+        row['Date limite'],
+        row.Statut,
+      ]
+
+      values.forEach((value, index) => {
+        const column = columns[index]
+        const maxChars = Math.max(8, Math.floor(column.width / 4.4))
+        wrapPdfText(value, maxChars).forEach((line, lineIndex) => {
+          commands.push(`1 0 0 1 ${column.x} ${y - lineIndex * 9} Tm`)
+          commands.push(`(${pdfText(line)}) Tj`)
+        })
+      })
+    })
+
+    commands.push('ET')
+    pages.push(commands.join('\n'))
+  }
+
+  const objects: string[] = []
+  const pageObjectNumbers: number[] = []
+
+  objects.push('<< /Type /Catalog /Pages 2 0 R >>')
+  objects.push('')
+  objects.push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>')
+
+  pages.forEach((content) => {
+    const contentNumber = objects.length + 1
+    objects.push(`<< /Length ${content.length} >>\nstream\n${content}\nendstream`)
+    const pageNumber = objects.length + 1
+    pageObjectNumbers.push(pageNumber)
+    objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << /F1 3 0 R >> >> /Contents ${contentNumber} 0 R >>`)
+  })
+
+  objects[1] = `<< /Type /Pages /Kids [${pageObjectNumbers.map((number) => `${number} 0 R`).join(' ')}] /Count ${pageObjectNumbers.length} >>`
+
+  const parts = ['%PDF-1.4\n']
+  const offsets = [0]
+  objects.forEach((object, index) => {
+    offsets.push(parts.join('').length)
+    parts.push(`${index + 1} 0 obj\n${object}\nendobj\n`)
+  })
+
+  const xrefOffset = parts.join('').length
+  parts.push(`xref\n0 ${objects.length + 1}\n`)
+  parts.push('0000000000 65535 f \n')
+  offsets.slice(1).forEach((offset) => {
+    parts.push(`${String(offset).padStart(10, '0')} 00000 n \n`)
+  })
+  parts.push(`trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`)
+
+  return parts.join('')
+}
+
+function downloadPdf(offres: Offre[]) {
+  if (offres.length === 0) return
+
+  const blob = new Blob([buildPdf(offres)], { type: 'application/pdf' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+
+  link.href = url
+  link.download = exportFileName('pdf')
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}
+
 export default function MarchesPage() {
   const [filters, setFilters] = useState<OffresFilters>({ size: 20, page: 0 })
   const [search, setSearch] = useState('')
@@ -102,7 +292,9 @@ export default function MarchesPage() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="u-btn-icon"><i className="fa-solid fa-file-excel" aria-hidden /> Exporter</button>
+          <button className="u-btn-icon" type="button" disabled={content.length === 0} onClick={() => downloadCsv(content)}>
+            <i className="fa-solid fa-file-excel" aria-hidden /> Exporter
+          </button>
         </div>
       </div>
 
@@ -225,8 +417,12 @@ export default function MarchesPage() {
             <span className="u-result-count">{total.toLocaleString('fr-FR')} marchés</span>
           </div>
           <div className="u-table-actions">
-            <button className="u-btn-icon"><i className="fa-solid fa-file-excel" aria-hidden /> Excel</button>
-            <button className="u-btn-icon"><i className="fa-solid fa-file-pdf" aria-hidden /> PDF</button>
+            <button className="u-btn-icon" type="button" disabled={content.length === 0} onClick={() => downloadCsv(content)}>
+              <i className="fa-solid fa-file-excel" aria-hidden /> Excel
+            </button>
+            <button className="u-btn-icon" type="button" disabled={content.length === 0} onClick={() => downloadPdf(content)}>
+              <i className="fa-solid fa-file-pdf" aria-hidden /> PDF
+            </button>
             <select
               style={{ padding: '7px 10px', border: '1.5px solid var(--border)', borderRadius: 7, fontSize: 12, fontFamily: "'Manrope',sans-serif", background: 'white', outline: 'none' }}
               value={filters.size}
@@ -280,12 +476,17 @@ export default function MarchesPage() {
                   const days = daysUntil(offre.dateLimiteSoumission)
                   const isUrgent = days !== null && days >= 0 && days <= 2
                   return (
-                    <tr key={offre.id}>
-                      <td><input type="checkbox" /></td>
+                    <tr
+                      key={offre.id}
+                      className="clickable-offre-row"
+                      title="Ouvrir l'offre sur le site officiel"
+                      onClick={() => openOfficialOffer(offre.sourceUrl)}
+                    >
+                      <td onClick={(e) => e.stopPropagation()}><input type="checkbox" /></td>
                       <td>
                         <div className="marche-ref">{offre.reference}</div>
                         <div className="marche-titre">
-                          <a href={offre.sourceUrl} target="_blank" rel="noopener noreferrer">{offre.titre}</a>
+                          <a href={offre.sourceUrl} onClick={(e) => e.stopPropagation()}>{offre.titre}</a>
                         </div>
                       </td>
                       <td>
@@ -321,8 +522,8 @@ export default function MarchesPage() {
                           {isUrgent ? 'Urgent' : statutLabel(offre.statut)}
                         </span>
                       </td>
-                      <td className="actions-cell">
-                        <a href={offre.sourceUrl} target="_blank" rel="noopener noreferrer" className="btn-action btn-voir">
+                      <td className="actions-cell" onClick={(e) => e.stopPropagation()}>
+                        <a href={offre.sourceUrl} className="btn-action btn-voir">
                           <i className="fa-solid fa-eye" aria-hidden /> Voir
                         </a>
                         <button

@@ -1,6 +1,11 @@
 import api from '@/lib/axios'
 import type {
   BackendAdminUser,
+  AdminEmailResponse,
+  AdminLogItem,
+  AdminMarketsResponse,
+  AdminSettingsResponse,
+  AdminStatisticsResponse,
   BackendPage,
   BackendScraperLog,
   Compte,
@@ -24,6 +29,40 @@ export async function getScrapingJobs(): Promise<ScrapingJob[]> {
 
 export async function triggerScraping(): Promise<void> {
   await api.post('/api/offres/scrape')
+}
+
+export async function getAdminMarkets(): Promise<AdminMarketsResponse> {
+  const { data } = await api.get<AdminMarketsResponse>('/api/admin/platform/markets')
+  return data
+}
+
+export async function deleteAdminMarket(id: string): Promise<void> {
+  await api.delete(`/api/admin/platform/markets/${id}`)
+}
+
+export async function getAdminStatistics(): Promise<AdminStatisticsResponse> {
+  const { data } = await api.get<AdminStatisticsResponse>('/api/admin/platform/statistics')
+  return data
+}
+
+export async function getAdminEmails(): Promise<AdminEmailResponse> {
+  const { data } = await api.get<AdminEmailResponse>('/api/admin/platform/emails')
+  return data
+}
+
+export async function sendAdminTestEmail(to?: string): Promise<string> {
+  const { data } = await api.post<{ message: string }>('/api/admin/platform/emails/test', { to })
+  return data.message
+}
+
+export async function getAdminLogs(): Promise<AdminLogItem[]> {
+  const { data } = await api.get<AdminLogItem[]>('/api/admin/platform/logs')
+  return data
+}
+
+export async function getAdminSettings(): Promise<AdminSettingsResponse> {
+  const { data } = await api.get<AdminSettingsResponse>('/api/admin/platform/settings')
+  return data
 }
 
 function mapAdminUser(user: BackendAdminUser): Compte {

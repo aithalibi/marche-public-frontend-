@@ -1,12 +1,25 @@
 'use client'
 
+import { useState } from 'react'
 import { useComptes } from '@/hooks/useAdmin'
 import Spinner from '@/components/ui/Spinner'
 import Badge from '@/components/ui/Badge'
 import { formatDate } from '@/lib/utils'
+import type { Role } from '@/types'
 
 export default function ComptesPage() {
   const { comptes, isLoading, error, setRole } = useComptes()
+  const [roleError, setRoleError] = useState('')
+  const adminCount = comptes.filter((compte) => compte.role === 'ADMIN').length
+
+  async function handleRoleChange(id: string, role: Role) {
+    setRoleError('')
+    try {
+      await setRole(id, role)
+    } catch {
+      setRoleError("Cette action est refusée : la plateforme doit garder un seul administrateur.")
+    }
+  }
 
   if (isLoading) return <div className="flex justify-center py-12"><Spinner /></div>
   if (error) return <p className="text-red-500 text-center py-8">Erreur lors du chargement.</p>
@@ -17,6 +30,12 @@ export default function ComptesPage() {
         <h1 className="text-xl font-bold text-gray-900">Comptes utilisateurs</h1>
         <span className="text-sm text-gray-500">{comptes.length} compte{comptes.length > 1 ? 's' : ''}</span>
       </div>
+
+      {roleError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {roleError}
+        </div>
+      )}
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <table className="w-full text-sm">
@@ -30,7 +49,13 @@ export default function ComptesPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {comptes.map((compte) => (
+            {comptes.map((compte) => {
+              const isOnlyAdmin = compte.role === 'ADMIN' && adminCount <= 1
+              const adminAlreadyExists = compte.role !== 'ADMIN' && adminCount > 0
+              const isDisabled = isOnlyAdmin || adminAlreadyExists
+              const nextRole = compte.role === 'ADMIN' ? 'USER' : 'ADMIN'
+
+              return (
               <tr key={compte.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-4 py-3">
                   <p className="font-medium text-gray-900">{compte.prenom} {compte.nom}</p>
@@ -49,14 +74,17 @@ export default function ComptesPage() {
                 <td className="px-4 py-3 text-gray-500">{formatDate(compte.createdAt)}</td>
                 <td className="px-4 py-3">
                   <button
-                    onClick={() => setRole(compte.id, compte.role === 'ADMIN' ? 'USER' : 'ADMIN')}
-                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                    onClick={() => handleRoleChange(compte.id, nextRole)}
+                    disabled={isDisabled}
+                    title={isDisabled ? "Un seul administrateur est autorisé" : undefined}
+                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {compte.role === 'ADMIN' ? 'Passer en USER' : 'Passer en ADMIN'}
                   </button>
                 </td>
               </tr>
-            ))}
+              )
+            })}
           </tbody>
         </table>
 

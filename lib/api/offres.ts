@@ -110,9 +110,22 @@ function mapBackendOffre(offre: BackendOffre, suivi?: BackendSuiviEntry): Offre 
     dateLimiteSoumission: offre.dateCloture,
     statut: computeStatut(offre.dateCloture),
     description: offre.description,
-    sourceUrl: offre.urlOfficielle,
+    sourceUrl: offre.urlOfficielle || buildOfficialSearchUrl(offre.reference),
     suivi: suivi ? toFrontendSuiviStatus(suivi.statut) : undefined,
   }
+}
+
+function buildOfficialSearchUrl(reference: string) {
+  const params = new URLSearchParams({
+    page: 'entreprise.EntrepriseAdvancedSearch',
+    searchAnnCons: '',
+  })
+
+  if (reference) {
+    params.set('reference', reference)
+  }
+
+  return `https://www.marchespublics.gov.ma/index.php?${params.toString()}`
 }
 
 function inferTypeMarche(secteur?: string, intitule?: string): Offre['typeMarche'] {

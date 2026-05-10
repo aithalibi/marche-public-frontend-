@@ -9,25 +9,23 @@ const nav = [
     sec: 'Tableau de bord',
     items: [
       { href: '/admin', label: "Vue d'ensemble", icon: 'fa-gauge' },
+      { href: '/admin/statistiques', label: 'Statistiques', icon: 'fa-chart-line' },
     ],
   },
   {
     sec: 'Gestion',
     items: [
       { href: '/admin/scraping', label: 'Robots & Scraping', icon: 'fa-robot' },
-      { href: '/admin', label: 'Base de données', icon: 'fa-database' },
-      { href: '/admin/comptes', label: 'Utilisateurs', icon: 'fa-users', badge: '4' },
-      { href: '/admin', label: 'Marchés', icon: 'fa-file-contract' },
-      { href: '/admin', label: 'Secteurs', icon: 'fa-layer-group' },
+      { href: '/admin/comptes', label: 'Utilisateurs', icon: 'fa-users' },
+      { href: '/admin/marches', label: 'Marchés', icon: 'fa-file-contract' },
+      { href: '/admin/emails', label: 'Emails & Alertes', icon: 'fa-envelope' },
     ],
   },
   {
     sec: 'Système',
     items: [
-      { href: '/admin', label: 'Emails & Alertes', icon: 'fa-envelope-open-text' },
-      { href: '/admin', label: 'Statistiques', icon: 'fa-chart-bar' },
-      { href: '/admin', label: 'Paramètres', icon: 'fa-gear' },
-      { href: '/admin', label: 'Logs système', icon: 'fa-terminal' },
+      { href: '/admin/logs', label: 'Logs système', icon: 'fa-terminal' },
+      { href: '/admin/parametres', label: 'Paramètres', icon: 'fa-gear' },
     ],
   },
 ]
@@ -65,7 +63,7 @@ export default function AdminSidebar() {
         </div>
         <div>
           <div className="sb-uname">{prenom} {nom}</div>
-          <div className="sb-urole">Super Admin</div>
+          <div className="sb-urole">Administrateur</div>
         </div>
       </div>
 
@@ -77,13 +75,10 @@ export default function AdminSidebar() {
               <Link
                 key={item.label}
                 href={item.href}
-                className={`sb-item${navActive(pathname, item.href) && item.href !== '/admin' ? ' active' : item.href === '/admin' && pathname === '/admin' ? ' active' : ''}`}
+                className={`sb-item${navActive(pathname, item.href) ? ' active' : ''}`}
               >
                 <i className={`fa-solid ${item.icon}`} aria-hidden />
                 {item.label}
-                {'badge' in item && item.badge && (
-                  <span className="sb-badge">{item.badge}</span>
-                )}
               </Link>
             ))}
           </div>
@@ -91,10 +86,10 @@ export default function AdminSidebar() {
       </div>
 
       <div className="sb-foot">
-        <a>
-          <i className="fa-solid fa-circle-question" aria-hidden />
-          Documentation
-        </a>
+        <Link href="/recherche">
+          <i className="fa-solid fa-arrow-left" aria-hidden />
+          Retour à l&apos;application
+        </Link>
         <button type="button" onClick={() => void signOut({ callbackUrl: '/login' })}>
           <i className="fa-solid fa-right-from-bracket" aria-hidden />
           Déconnexion

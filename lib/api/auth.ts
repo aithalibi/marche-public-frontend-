@@ -16,3 +16,15 @@ export async function register(payload: RegisterPayload): Promise<BackendAuthRes
   const { data } = await base.post<BackendAuthResponse>('/api/auth/register', payload)
   return data
 }
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  await base.post('/api/auth/password-reset/request', { email })
+}
+
+export async function verifyPasswordResetCode(email: string, code: string): Promise<void> {
+  await base.post('/api/auth/password-reset/verify', { email, code })
+}
+
+export async function confirmPasswordReset(email: string, code: string, newPassword: string): Promise<void> {
+  await base.post('/api/auth/password-reset/confirm', { email, code, newPassword })
+}

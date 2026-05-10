@@ -45,18 +45,8 @@ export default function UserTopbar() {
             Vue d&apos;ensemble
           </Link>
           <Link
-            href="/correspondances"
-            className={`u-nav-link${pathname.startsWith('/correspondances') ? ' active' : ''}`}
-          >
-            <i className="fa-solid fa-envelope" aria-hidden />
-            Correspondances
-            {unreadCount > 0 && (
-              <span className="u-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
-            )}
-          </Link>
-          <Link
             href="/marches"
-            className={`u-nav-link${pathname.startsWith('/marches') ? ' active' : ''}`}
+            className={`u-nav-link${pathname.startsWith('/marches') || pathname.startsWith('/correspondances') ? ' active' : ''}`}
           >
             <i className="fa-solid fa-list-check" aria-hidden />
             Tous les marchés

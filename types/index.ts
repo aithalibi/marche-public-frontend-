@@ -238,6 +238,73 @@ export interface BackendScraperLog {
   duree?: number
 }
 
+export interface AdminMarketItem {
+  id: string
+  reference: string
+  intitule: string
+  organisme: string
+  secteur: string
+  localisation: string
+  datePublication?: string
+  dateCloture?: string
+  statut: 'OUVERT' | 'CLOS'
+  urlOfficielle?: string
+}
+
+export interface AdminMarketsResponse {
+  total: number
+  ouverts: number
+  clos: number
+  sansLienOfficiel: number
+  marches: AdminMarketItem[]
+}
+
+export interface AdminMetricItem {
+  label: string
+  value: number
+}
+
+export interface AdminStatisticsResponse {
+  totalMarches: number
+  marchesOuverts: number
+  echeancesSeptJours: number
+  totalUtilisateurs: number
+  totalSuivis: number
+  totalNotifications: number
+  parSecteur: AdminMetricItem[]
+  parRegion: AdminMetricItem[]
+  collectesParJour: AdminMetricItem[]
+}
+
+export interface AdminEmailResponse {
+  configure: boolean
+  host: string
+  port: number
+  username: string
+  notificationsCreees: number
+}
+
+export interface AdminLogItem {
+  id: string
+  source: string
+  statut: string
+  message?: string
+  erreur?: string
+  dateDebut: string
+  dateFin?: string
+}
+
+export interface AdminSettingsResponse {
+  application: string
+  serverPort: string
+  mongoDatabase: string
+  mailHost: string
+  mailPort: number
+  totalUtilisateurs: number
+  totalMarches: number
+  totalLogs: number
+}
+
 // ─── NextAuth Session extension ───────────────────────────────────────────────
 
 import 'next-auth'

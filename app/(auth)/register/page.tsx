@@ -6,25 +6,38 @@ import { signIn } from 'next-auth/react'
 import Link from 'next/link'
 import { AuthTabBar } from '@/components/auth/AuthTabBar'
 import { register } from '@/lib/api/auth'
+import { submitQuestionnaire } from '@/lib/api/profil'
 
 type Step = 1 | 2 | 3
 
 const sectors = [
-  { icon: 'fa-laptop-code', name: 'Informatique & IT' },
-  { icon: 'fa-hard-hat', name: 'BTP & Travaux' },
-  { icon: 'fa-stethoscope', name: 'SantÃ©' },
-  { icon: 'fa-graduation-cap', name: 'Ã‰ducation' },
-  { icon: 'fa-bolt', name: 'Ã‰nergie' },
+  { icon: 'fa-laptop-code', name: 'Informatique et IT' },
+  { icon: 'fa-hard-hat', name: 'BTP et travaux publics' },
+  { icon: 'fa-stethoscope', name: 'Santé' },
+  { icon: 'fa-graduation-cap', name: 'Éducation' },
+  { icon: 'fa-bolt', name: 'Énergie' },
   { icon: 'fa-truck', name: 'Transport' },
-  { icon: 'fa-shield-halved', name: 'SÃ©curitÃ©' },
-  { icon: 'fa-tower-broadcast', name: 'TÃ©lÃ©coms' },
+  { icon: 'fa-shield-halved', name: 'Sécurité' },
+  { icon: 'fa-tower-broadcast', name: 'Télécoms' },
   { icon: 'fa-utensils', name: 'Restauration' },
 ]
 
 const notifOpts = [
-  { icon: 'fa-bolt', title: 'Notification immÃ©diate', desc: 'Email envoyÃ© dÃ¨s la dÃ©tection d\'un marchÃ© correspondant' },
-  { icon: 'fa-sun', title: 'RÃ©sumÃ© quotidien', desc: 'Un email chaque matin Ã  8h00 avec toutes les correspondances' },
-  { icon: 'fa-calendar-week', title: 'RÃ©sumÃ© hebdomadaire', desc: 'Un email chaque lundi avec les marchÃ©s de la semaine' },
+  {
+    icon: 'fa-bolt',
+    title: 'Notification immédiate',
+    desc: "Recevez un email dès qu'un marché correspond à vos critères.",
+  },
+  {
+    icon: 'fa-sun',
+    title: 'Résumé quotidien',
+    desc: 'Recevez chaque matin un récapitulatif des nouvelles correspondances.',
+  },
+  {
+    icon: 'fa-calendar-week',
+    title: 'Résumé hebdomadaire',
+    desc: 'Recevez chaque lundi les marchés importants de la semaine.',
+  },
 ]
 
 export default function RegisterPage() {
@@ -64,9 +77,14 @@ export default function RegisterPage() {
       await register({ nom: form.nom, prenom: form.prenom, email: form.email, password: form.password })
       const result = await signIn('credentials', { email: form.email, password: form.password, redirect: false })
       if (result?.error) throw new Error()
+      await submitQuestionnaire({
+        secteurs: selectedSectors,
+        regions: region ? [region] : [],
+        typesMarcheInteresse: [],
+      })
       setShowSuccess(true)
     } catch {
-      setError('Une erreur est survenue. VÃ©rifiez vos informations.')
+      setError('Une erreur est survenue. Vérifiez vos informations.')
     } finally {
       setLoading(false)
     }
@@ -90,11 +108,11 @@ export default function RegisterPage() {
           <div className="success-ico">
             <i className="fa-solid fa-circle-check" aria-hidden />
           </div>
-          <h3>Compte crÃ©Ã© avec succÃ¨s !</h3>
-          <p>Un email de confirmation vous a Ã©tÃ© envoyÃ©. Votre profil de veille est actif.</p>
+          <h3>Compte créé avec succès</h3>
+          <p>Un email de confirmation vous a été envoyé. Votre profil de veille est maintenant actif.</p>
           <button className="btn-primary" style={{ maxWidth: 300, margin: '0 auto' }} onClick={() => router.push('/recherche')}>
             <i className="fa-solid fa-gauge" aria-hidden />
-            AccÃ©der Ã  mon tableau de bord
+            Accéder à mon tableau de bord
           </button>
         </div>
       </>
@@ -121,13 +139,13 @@ export default function RegisterPage() {
         {step === 1 && (
           <div className="form-step" id="step1">
             <div className="form-card">
-              <h3><i className="fa-solid fa-user-pen" aria-hidden /> CrÃ©ez votre compte</h3>
-              <div className="sub">Quelques informations pour commencer</div>
+              <h3><i className="fa-solid fa-user-pen" aria-hidden /> Créez votre compte</h3>
+              <div className="sub">Renseignez vos informations pour commencer.</div>
 
               <div className="form-row">
                 <div className="fg" style={{ marginBottom: 0 }}>
-                  <label><i className="fa-solid fa-user" aria-hidden /> PrÃ©nom <span className="req">*</span></label>
-                  <input className="fi" placeholder="PrÃ©nom" value={form.prenom} onChange={setField('prenom')} />
+                  <label><i className="fa-solid fa-user" aria-hidden /> Prénom <span className="req">*</span></label>
+                  <input className="fi" placeholder="Prénom" value={form.prenom} onChange={setField('prenom')} />
                 </div>
                 <div className="fg" style={{ marginBottom: 0 }}>
                   <label><i className="fa-solid fa-user" aria-hidden /> Nom <span className="req">*</span></label>
@@ -141,54 +159,54 @@ export default function RegisterPage() {
               </div>
 
               <div className="fg">
-                <label><i className="fa-solid fa-phone" aria-hidden /> TÃ©lÃ©phone</label>
+                <label><i className="fa-solid fa-phone" aria-hidden /> Téléphone</label>
                 <input className="fi" type="tel" placeholder="+212 6XX XXX XXX" value={form.telephone} onChange={setField('telephone')} />
               </div>
 
               <div className="fg">
                 <label><i className="fa-solid fa-building" aria-hidden /> Entreprise <span className="req">*</span></label>
-                <input className="fi" placeholder="Nom de votre sociÃ©tÃ©" value={form.entreprise} onChange={setField('entreprise')} />
+                <input className="fi" placeholder="Nom de votre société" value={form.entreprise} onChange={setField('entreprise')} />
               </div>
 
               <div className="fg">
-                <label><i className="fa-solid fa-id-badge" aria-hidden /> Vous Ãªtes... <span className="req">*</span></label>
+                <label><i className="fa-solid fa-id-badge" aria-hidden /> Votre profil <span className="req">*</span></label>
                 <select className="fi" value={form.profil} onChange={setField('profil')}>
-                  <option value="">SÃ©lectionner votre profil</option>
+                  <option value="">Sélectionnez votre profil</option>
                   <option>PME / TPE</option>
                   <option>Grande entreprise</option>
-                  <option>Bureau d&apos;Ã©tudes</option>
-                  <option>Consultant indÃ©pendant</option>
+                  <option>Bureau d&apos;études</option>
+                  <option>Consultant indépendant</option>
                 </select>
               </div>
 
               <div className="form-row">
                 <div className="fg" style={{ marginBottom: 0 }}>
                   <label><i className="fa-solid fa-lock" aria-hidden /> Mot de passe <span className="req">*</span></label>
-                  <input className="fi" type="password" placeholder="Min. 8 caractÃ¨res" value={form.password} onChange={setField('password')} />
+                  <input className="fi" type="password" placeholder="Minimum 8 caractères" value={form.password} onChange={setField('password')} />
                 </div>
                 <div className="fg" style={{ marginBottom: 0 }}>
-                  <label><i className="fa-solid fa-lock" aria-hidden /> Confirmer <span className="req">*</span></label>
-                  <input className="fi" type="password" placeholder="RÃ©pÃ©ter" value={form.confirm} onChange={setField('confirm')} />
+                  <label><i className="fa-solid fa-lock" aria-hidden /> Confirmation <span className="req">*</span></label>
+                  <input className="fi" type="password" placeholder="Répétez le mot de passe" value={form.confirm} onChange={setField('confirm')} />
                 </div>
               </div>
             </div>
 
             <button className="btn-primary" onClick={() => goStep(2)}>
               <i className="fa-solid fa-arrow-right" aria-hidden />
-              Continuer : Mon domaine
+              Continuer vers mon domaine
             </button>
-            <p className="helper">DÃ©jÃ  un compte ? <Link href="/login">Se connecter</Link></p>
+            <p className="helper">Déjà un compte ? <Link href="/login">Se connecter</Link></p>
           </div>
         )}
 
         {step === 2 && (
           <div className="form-step" id="step2">
             <div className="form-card">
-              <h3><i className="fa-solid fa-sliders" aria-hidden /> Votre domaine d&apos;activitÃ©</h3>
-              <div className="sub">Ces informations personnalisent les marchÃ©s que vous recevrez</div>
+              <h3><i className="fa-solid fa-sliders" aria-hidden /> Votre domaine d&apos;activité</h3>
+              <div className="sub">Ces informations permettent de personnaliser les marchés que vous recevrez.</div>
 
               <div className="fg">
-                <label><i className="fa-solid fa-layer-group" aria-hidden /> Secteurs d&apos;activitÃ© <span className="req">*</span></label>
+                <label><i className="fa-solid fa-layer-group" aria-hidden /> Secteurs d&apos;activité <span className="req">*</span></label>
                 <div className="sectors-grid">
                   {sectors.map((s) => (
                     <div
@@ -204,11 +222,11 @@ export default function RegisterPage() {
               </div>
 
               <div className="fg" style={{ marginTop: 14 }}>
-                <label><i className="fa-solid fa-map-pin" aria-hidden /> Localisation cible <span className="req">*</span></label>
+                <label><i className="fa-solid fa-map-pin" aria-hidden /> Région cible <span className="req">*</span></label>
                 <select className="fi" value={region} onChange={(e) => setRegion(e.target.value)}>
-                  <option value="">Toutes les rÃ©gions</option>
+                  <option value="">Toutes les régions</option>
                   <option>Casablanca-Settat</option>
-                  <option>Rabat-SalÃ©-KÃ©nitra</option>
+                  <option>Rabat-Salé-Kénitra</option>
                   <option>Souss-Massa</option>
                   <option>Marrakech-Safi</option>
                 </select>
@@ -221,7 +239,7 @@ export default function RegisterPage() {
               </button>
               <button className="btn-primary" onClick={() => goStep(3)}>
                 <i className="fa-solid fa-arrow-right" aria-hidden />
-                Continuer : Mes alertes
+                Continuer vers mes alertes
               </button>
             </div>
           </div>
@@ -230,11 +248,11 @@ export default function RegisterPage() {
         {step === 3 && (
           <div className="form-step" id="step3">
             <div className="form-card">
-              <h3><i className="fa-solid fa-bell" aria-hidden /> PrÃ©fÃ©rences d&apos;alertes</h3>
-              <div className="sub">Comment souhaitez-vous Ãªtre notifiÃ© des nouveaux marchÃ©s ?</div>
+              <h3><i className="fa-solid fa-bell" aria-hidden /> Préférences d&apos;alertes</h3>
+              <div className="sub">Choisissez comment recevoir les nouveaux marchés qui correspondent à votre profil.</div>
 
               <div className="fg">
-                <label><i className="fa-solid fa-clock" aria-hidden /> FrÃ©quence de notification <span className="req">*</span></label>
+                <label><i className="fa-solid fa-clock" aria-hidden /> Fréquence de notification <span className="req">*</span></label>
                 <div className="notif-opts">
                   {notifOpts.map((opt, idx) => (
                     <div
@@ -258,8 +276,8 @@ export default function RegisterPage() {
               <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 9, padding: 13, marginTop: 14, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                 <i className="fa-solid fa-circle-check" style={{ color: 'var(--green)', marginTop: 1 }} aria-hidden />
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#166534' }}>Votre profil est prÃªt</div>
-                  <div style={{ fontSize: 11, color: '#16a34a', marginTop: 2 }}>Le robot commencera Ã  surveiller les marchÃ©s dÃ¨s votre inscription.</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#166534' }}>Votre profil est prêt</div>
+                  <div style={{ fontSize: 11, color: '#16a34a', marginTop: 2 }}>La surveillance des marchés commencera dès votre inscription.</div>
                 </div>
               </div>
             </div>
@@ -272,7 +290,7 @@ export default function RegisterPage() {
               </button>
               <button className="btn-primary" onClick={handleFinish} disabled={loading}>
                 <i className="fa-solid fa-rocket" aria-hidden />
-                {loading ? 'CrÃ©ationâ€¦' : 'CrÃ©er mon compte et commencer'}
+                {loading ? 'Création...' : 'Créer mon compte et commencer'}
               </button>
             </div>
           </div>
