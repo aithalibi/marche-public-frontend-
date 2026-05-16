@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
 import OffreCard from './OffreCard'
 import type { Offre } from '@/types'
 
@@ -39,7 +38,7 @@ describe('OffreCard', () => {
 
   it('notifies when the suivi status changes', async () => {
     const user = userEvent.setup()
-    const onSuiviChange = vi.fn()
+    const onSuiviChange = jest.fn()
 
     render(<OffreCard offre={offre} onSuiviChange={onSuiviChange} />)
 

@@ -1,12 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
 import Button from './Button'
 
 describe('Button', () => {
   it('renders its content and calls the click handler', async () => {
     const user = userEvent.setup()
-    const handleClick = vi.fn()
+    const handleClick = jest.fn()
 
     render(<Button onClick={handleClick}>Envoyer</Button>)
 
@@ -17,7 +16,7 @@ describe('Button', () => {
 
   it('is disabled while loading', async () => {
     const user = userEvent.setup()
-    const handleClick = vi.fn()
+    const handleClick = jest.fn()
 
     render(
       <Button loading onClick={handleClick}>

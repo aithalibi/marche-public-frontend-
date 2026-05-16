@@ -1,12 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
 import OffreFilters from './OffreFilters'
 
 describe('OffreFilters', () => {
   it('updates the search filter and resets the page', async () => {
     const user = userEvent.setup()
-    const onChange = vi.fn()
+    const onChange = jest.fn()
 
     render(<OffreFilters filters={{ page: 2 }} onChange={onChange} />)
 
@@ -17,7 +16,7 @@ describe('OffreFilters', () => {
 
   it('opens advanced filters and updates region', async () => {
     const user = userEvent.setup()
-    const onChange = vi.fn()
+    const onChange = jest.fn()
 
     render(<OffreFilters filters={{}} onChange={onChange} />)
 
@@ -29,7 +28,7 @@ describe('OffreFilters', () => {
 
   it('resets active filters', async () => {
     const user = userEvent.setup()
-    const onChange = vi.fn()
+    const onChange = jest.fn()
 
     render(<OffreFilters filters={{ search: 'ecole' }} onChange={onChange} />)
 

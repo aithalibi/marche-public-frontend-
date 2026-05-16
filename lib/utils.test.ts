@@ -1,9 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
 import { formatCurrency, formatDate, formatDistanceToNow } from './utils'
 
 describe('utils', () => {
   afterEach(() => {
-    vi.useRealTimers()
+    jest.useRealTimers()
   })
 
   it('formats an ISO date for French users', () => {
@@ -18,8 +17,8 @@ describe('utils', () => {
   })
 
   it('formats a relative date in minutes', () => {
-    vi.useFakeTimers()
-    vi.setSystemTime(new Date('2026-05-06T12:10:00.000Z'))
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date('2026-05-06T12:10:00.000Z'))
 
     expect(formatDistanceToNow('2026-05-06T12:00:00.000Z')).toBe('il y a 10 min')
   })

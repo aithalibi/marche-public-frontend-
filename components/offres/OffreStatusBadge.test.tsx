@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
 import { StatutBadge, SuiviBadge } from './OffreStatusBadge'
 
 describe('OffreStatusBadge', () => {

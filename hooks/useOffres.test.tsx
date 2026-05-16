@@ -1,15 +1,14 @@
 import { ReactNode } from 'react'
 import { renderHook, waitFor } from '@testing-library/react'
 import { SWRConfig } from 'swr'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useOffre, useOffres, useSuiviActions } from './useOffres'
 import { getOffre, getOffres, removeSuivi, updateSuivi } from '@/lib/api/offres'
 
-vi.mock('@/lib/api/offres', () => ({
-  getOffres: vi.fn(),
-  getOffre: vi.fn(),
-  updateSuivi: vi.fn(),
-  removeSuivi: vi.fn(),
+jest.mock('@/lib/api/offres', () => ({
+  getOffres: jest.fn(),
+  getOffre: jest.fn(),
+  updateSuivi: jest.fn(),
+  removeSuivi: jest.fn(),
 }))
 
 function wrapper({ children }: { children: ReactNode }) {
@@ -22,11 +21,11 @@ function wrapper({ children }: { children: ReactNode }) {
 
 describe('useOffres hooks', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    jest.clearAllMocks()
   })
 
   it('loads offers with the provided filters', async () => {
-    vi.mocked(getOffres).mockResolvedValue({
+    jest.mocked(getOffres).mockResolvedValue({
       content: [],
       totalElements: 0,
       totalPages: 0,
@@ -50,7 +49,7 @@ describe('useOffres hooks', () => {
   })
 
   it('loads an offer by id', async () => {
-    vi.mocked(getOffre).mockResolvedValue({
+    jest.mocked(getOffre).mockResolvedValue({
       id: 'offre-1',
       reference: 'AO-1',
       titre: 'Offre test',
@@ -73,8 +72,8 @@ describe('useOffres hooks', () => {
   })
 
   it('exposes suivi actions', async () => {
-    vi.mocked(updateSuivi).mockResolvedValue()
-    vi.mocked(removeSuivi).mockResolvedValue()
+    jest.mocked(updateSuivi).mockResolvedValue()
+    jest.mocked(removeSuivi).mockResolvedValue()
 
     const { result } = renderHook(() => useSuiviActions())
 

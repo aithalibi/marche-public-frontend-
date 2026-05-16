@@ -1,21 +1,20 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import OffrePage from './page'
 import { useOffre } from '@/hooks/useOffres'
 import { updateSuivi } from '@/lib/api/offres'
 import type { Offre } from '@/types'
 
-vi.mock('next/navigation', () => ({
+jest.mock('next/navigation', () => ({
   useParams: () => ({ id: 'offre-1' }),
 }))
 
-vi.mock('@/hooks/useOffres', () => ({
-  useOffre: vi.fn(),
+jest.mock('@/hooks/useOffres', () => ({
+  useOffre: jest.fn(),
 }))
 
-vi.mock('@/lib/api/offres', () => ({
-  updateSuivi: vi.fn(),
+jest.mock('@/lib/api/offres', () => ({
+  updateSuivi: jest.fn(),
 }))
 
 const offre: Offre = {
@@ -37,11 +36,11 @@ const offre: Offre = {
 
 describe('OffrePage', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    jest.clearAllMocks()
   })
 
   it('uses the route id to load the offer', () => {
-    vi.mocked(useOffre).mockReturnValue({ offre, isLoading: false, error: undefined })
+    jest.mocked(useOffre).mockReturnValue({ offre, isLoading: false, error: undefined })
 
     render(<OffrePage />)
 
@@ -55,7 +54,7 @@ describe('OffrePage', () => {
   })
 
   it('renders an error state when the offer is missing', () => {
-    vi.mocked(useOffre).mockReturnValue({ offre: undefined, isLoading: false, error: new Error('fail') })
+    jest.mocked(useOffre).mockReturnValue({ offre: undefined, isLoading: false, error: new Error('fail') })
 
     render(<OffrePage />)
 
@@ -64,7 +63,7 @@ describe('OffrePage', () => {
   })
 
   it('renders the offer details', () => {
-    vi.mocked(useOffre).mockReturnValue({ offre, isLoading: false, error: undefined })
+    jest.mocked(useOffre).mockReturnValue({ offre, isLoading: false, error: undefined })
 
     render(<OffrePage />)
 
@@ -80,8 +79,8 @@ describe('OffrePage', () => {
 
   it('updates suivi from the detail page', async () => {
     const user = userEvent.setup()
-    vi.mocked(updateSuivi).mockResolvedValue()
-    vi.mocked(useOffre).mockReturnValue({ offre, isLoading: false, error: undefined })
+    jest.mocked(updateSuivi).mockResolvedValue()
+    jest.mocked(useOffre).mockReturnValue({ offre, isLoading: false, error: undefined })
 
     render(<OffrePage />)
 
@@ -92,6 +91,6 @@ describe('OffrePage', () => {
 })
 
 function renderLoadingPage() {
-  vi.mocked(useOffre).mockReturnValue({ offre: undefined, isLoading: true, error: undefined })
+  jest.mocked(useOffre).mockReturnValue({ offre: undefined, isLoading: true, error: undefined })
   return render(<OffrePage />)
 }

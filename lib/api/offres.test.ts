@@ -1,17 +1,17 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getOffre, getOffres, removeSuivi, updateSuivi } from './offres'
 import api from '@/lib/axios'
 
-vi.mock('@/lib/axios', () => ({
+jest.mock('@/lib/axios', () => ({
+  __esModule: true,
   default: {
-    get: vi.fn(),
-    post: vi.fn(),
-    patch: vi.fn(),
-    delete: vi.fn(),
+    get: jest.fn(),
+    post: jest.fn(),
+    patch: jest.fn(),
+    delete: jest.fn(),
   },
 }))
 
-const mockedApi = vi.mocked(api)
+const mockedApi = jest.mocked(api)
 
 const backendOffre = {
   id: 'offre-1',
@@ -36,7 +36,7 @@ const pageResponse = {
 
 describe('offres API', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    jest.clearAllMocks()
   })
 
   it('fetches offers with backend filters and maps the response', async () => {
